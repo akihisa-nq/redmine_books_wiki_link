@@ -21,5 +21,28 @@ Redmine::WikiFormatting::Macros.register do
 			thumbnail_tag(wiki.attachments.first) + ' ' + link_to(title, wiki)
 		end
 	end
+
+	desc "Issue Tree"
+	macro :issue_tree do |obj, args|
+		trackers = Tracker.where("name IN(?)", ["エピック", "ストーリー"]).select("id").all
+		statuses = IssueStatus.where("name IN(?)", ["作業中", "常駐"]).select("id").all
+		issues = Issue.where("tracker_id IN(?) AND parent_id IS NULL AND status_id IN(?)", trackers, statuses).all
+
+		html = ""
+		recursive_do = lambda do |issues_|
+			html += "<ul>\n"
+			issues_.each do |issue|
+				next unless statuses.any? {|v| v.id == issue.status.id }
+
+				html += "<li>#{link_to_issue(issue)}\n"
+				recursive_do.call(issue.children) unless issue.leaf?
+				html += "</li>\n"
+			end
+			html += "</ul>\n"
+		end
+		recursive_do.call(issues)
+
+		raw(html)
+	end
 end
 
