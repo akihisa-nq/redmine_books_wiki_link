@@ -1,3 +1,5 @@
+require_relative 'lib/books_wiki_link'
+
 Redmine::Plugin.register :books_wiki_link do
   name 'Books Wiki Link plugin'
   author 'Author name'
@@ -25,7 +27,7 @@ Redmine::WikiFormatting::Macros.register do
 	desc "Issue Tree"
 	macro :issue_tree do |obj, args|
 		trackers = Tracker.where("name IN(?)", ["エピック", "ストーリー"]).select("id").all
-		statuses = IssueStatus.where("name IN(?)", ["作業中", "常駐"]).select("id").all
+		statuses = BooksWikiLinkHelper.wip_statuses
 		issues = Issue.where("tracker_id IN(?) AND parent_id IS NULL AND status_id IN(?)", trackers, statuses).all
 
 		html = ""
@@ -43,6 +45,18 @@ Redmine::WikiFormatting::Macros.register do
 		recursive_do.call(issues)
 
 		raw(html)
+	end
+end
+
+module BooksWikiLinkPlugin
+	class Hooks < Redmine::Hook::Listener
+		def controller_issues_bulk_edit_before_save(context = {})
+			IssueStatusFixer.fix_status(context[:issue])
+		end
+
+		def controller_issues_edit_before_save(context = {})
+			IssueStatusFixer.fix_status(context[:issue])
+		end
 	end
 end
 
