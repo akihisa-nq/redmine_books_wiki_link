@@ -57,6 +57,10 @@ module BooksWikiLinkPlugin
 		def controller_issues_edit_before_save(context = {})
 			IssueStatusFixer.fix_status(context[:issue])
 		end
+
+		def controller_agile_boards_update_before_save(context = {})
+			IssueStatusFixer.fix_status(context[:issue])
+		end
 	end
 end
 
