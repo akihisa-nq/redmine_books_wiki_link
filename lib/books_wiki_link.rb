@@ -15,8 +15,11 @@ class IssueStatusFixer
 			# 作業中 -> 親を作業中に変更
 			parent = issue.parent
 			while parent do
-				parent.status = issue.status
-				parent.save!
+				# 作業中のものは状態そのまま (常駐を作業中にしたりしない)
+				unless statuses.any? {|v| v.id == parent.status.id }
+					parent.status = issue.status
+					parent.save!
+				end
 				parent = parent.parent
 			end
 		else
